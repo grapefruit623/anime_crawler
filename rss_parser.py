@@ -21,26 +21,37 @@ class rss_parser():
     def print_feed(self):
         print self.parser.feed
 
+    def targetList(self):
+        f = open('targetList.txt', 'r')
+        d = f.readlines()
+        f.close()
+        target = []
+        for keyword in d:
+            aAnimation = keyword.rstrip()
+            target.append([aAnimation, False])
+        return target
     '''
         Can get magnet href
     '''
     def parse_entries(self):
         entries = self.parser.entries
+        '''
         htmlRes = urllib.urlopen(entries[0].link).read()
         magnet = BeautifulSoup(htmlRes).find( name='a', attrs={'href': re.compile('magnet')} )
         print magnet['href']
 
         tc.add_torrent( magnet['href'] )
+        '''
 
         '''
             Can use title to filter animation and attr i.e. BIG5, MP4
         '''
-        '''
+        #keywordList = self.targetList()
+        #print keywordList
         for item in entries:
-            print item.title, item.link
-            fTitle = item.title.find('BIG5') 
-            print fTitle
-            '''
+            # u'' is meaning?
+            if None != re.search( re.compile(u'絕對|繁體'), item.title ):
+                print item.title 
 
 if __name__ == '__main__':
     rssParser = rss_parser()
