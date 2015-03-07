@@ -16,16 +16,18 @@ passwd = '1234567'
 class rss_parser():
     def __init__(self):
         self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
-        if self.open_transmissionClient(): # Father will add torent
+        self.keywordList = self.get_targetList()
+
+        if self.open_transmissionClient():  # Father will add torent
             time.sleep(3)
             self.tc = transmissionrpc.Client('localhost', port=9091,
                                              user=userName, password=passwd)
-            self.parse_entries()
+            self.timerForSearch()
 
     def __del__(self):
         print '__del__'
 
-    def targetList(self):
+    def get_targetList(self):
         f = open('targetList.txt', 'r')
         d = f.readlines()
         f.close()
@@ -34,24 +36,47 @@ class rss_parser():
             aAnimation = keyword.rstrip()
             target.append([aAnimation, False])
         return target
+
+    def timerForSearch(self):
+        while not self.parse_entries():
+            print 'Not found'
+            time.sleep(1800)
+        print 'Found it!'
+
+    '''
+        pasre Animation's name, episode, coding to regex condition 
+    '''
+    def get_parseCondition(self):
+        regex = ''
+        pattern = u'(?=.*{0})'
+        for anim in self.keywordList:
+            for condition in anim[0].split(','):
+                regex += pattern.format(condition)
+
+        regex += '.*'
+        return unicode(regex)
+
     '''
         Can get magnet href
         We must be check whether transmission is launched?
     '''
     def parse_entries(self):
         entries = self.parser.entries
+        self.get_parseCondition()
         '''
             Can use title to filter animation and attr i.e. BIG5, MP4
         '''
-        # keywordList = self.targetList()
-        # print keywordList
         for item in entries:
-            # u'' is meaning?
-            if None != re.search(re.compile(u'絕對|繁體'), item.title):
+            # u'' is meaning? unicode!!, re.MULTILINE is meaning?
+            regex = self.get_parseCondition()
+            if None != re.search(re.compile(u'(?=.*JOJO).*', re.MULTILINE),
+                                 item.title):
                 htmlRes = urllib.urlopen(item.link).read()
                 magnet = BeautifulSoup(htmlRes).find(name='a',
                                                      attrs={'href': re.compile('magnet')})
                 self.tc.add_torrent(magnet['href'])
+                return True
+        return False
 
     '''
         must be mult thresad
