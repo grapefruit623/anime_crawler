@@ -54,7 +54,8 @@ class rss_parser():
                 regex += pattern.format(condition)
 
         regex += '.*'
-        return unicode(regex)
+        return regex
+
 
     '''
         Can get magnet href
@@ -69,7 +70,8 @@ class rss_parser():
         for item in entries:
             # u'' is meaning? unicode!!, re.MULTILINE is meaning?
             regex = self.get_parseCondition()
-            if None != re.search(re.compile(u'(?=.*JOJO).*', re.MULTILINE),
+            print type(regex)
+            if None != re.search(re.compile(regex, re.MULTILINE),
                                  item.title):
                 htmlRes = urllib.urlopen(item.link).read()
                 magnet = BeautifulSoup(htmlRes).find(name='a',
