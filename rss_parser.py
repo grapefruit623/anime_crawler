@@ -12,6 +12,8 @@ from BeautifulSoup import BeautifulSoup
 userName = 'grf623BT'
 passwd = '1234567'
 
+user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; windows NT)'
+header = { 'User-Agent': user_agent }
 
 class rss_parser():
     def __init__(self):
@@ -70,12 +72,24 @@ class rss_parser():
         for item in entries:
             # u'' is meaning? unicode!!, re.MULTILINE is meaning?
             regex = self.get_parseCondition()
-            print type(regex)
             if None != re.search(re.compile(regex, re.MULTILINE),
                                  item.title):
-                htmlRes = urllib.urlopen(item.link).read()
-                magnet = BeautifulSoup(htmlRes).find(name='a',
-                                                     attrs={'href': re.compile('magnet')})
+                print item.title
+                print item.link
+                htmlRes = urllib.urlopen(item.link, None, header)
+                print htmlRes.getcode()
+                '''
+                Why this fail?
+
+                magnet = BeautifulSoup(htmlRes.read()).find(name='a',
+                                                     attrs={'href': re.compile(u'magnet')})
+                '''
+                '''
+                Why this fail?
+                magnet = BeautifulSoup(htmlRes.read()).find_all(name='a')
+                '''
+                magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile('magnet'))
+                print magnet
                 self.tc.add_torrent(magnet['href'])
                 return True
         return False
