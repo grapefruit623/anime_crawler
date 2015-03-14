@@ -53,7 +53,7 @@ class rss_parser():
         pattern = u'(?=.*{0})'
         for anim in self.keywordList:
             for condition in anim[0].split(','):
-                regex += pattern.format(condition)
+                regex += pattern.format(unicode(condition, 'utf8'))
 
         regex += '.*'
         return regex
