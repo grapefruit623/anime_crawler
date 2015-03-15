@@ -9,7 +9,7 @@ import time
 
 from BeautifulSoup import BeautifulSoup
 
-userName = 'grf623BT'
+userName = 'BT'
 passwd = '1234567'
 
 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; windows NT)'
@@ -19,6 +19,7 @@ class rss_parser():
     def __init__(self):
         self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
         self.keywordList = self.get_targetList()
+        self.get_parseCondition()
 
         if self.open_transmissionClient():  # Father will add torent
             time.sleep(3)
@@ -33,30 +34,36 @@ class rss_parser():
         f = open('targetList.txt', 'r')
         d = f.readlines()
         f.close()
-        target = []
+        target = set([])
         for keyword in d:
             aAnimation = keyword.rstrip()
-            target.append([aAnimation, False])
+            target.add(aAnimation)
         return target
 
+
     def timerForSearch(self):
-        while not self.parse_entries():
-            print 'Not found'
+        while 0 != len(self.regexList):
+            self.parse_entries()
             time.sleep(1800)
-        print 'Found it!'
+            print 'Not finish'
+        print 'finish!'
 
     '''
         pasre Animation's name, episode, coding to regex condition 
+        ToDo:
+            To filter RAW files
     '''
     def get_parseCondition(self):
-        regex = ''
+        self.regexList = set([]) 
         pattern = u'(?=.*{0})'
         for anim in self.keywordList:
-            for condition in anim[0].split(','):
+            regex = ''
+            for condition in anim.split(','):
                 regex += pattern.format(unicode(condition, 'utf8'))
 
-        regex += '.*'
-        return regex
+            regex += '.*'
+            self.regexList.add( regex )
+
 
 
     '''
@@ -65,35 +72,30 @@ class rss_parser():
     '''
     def parse_entries(self):
         entries = self.parser.entries
-        self.get_parseCondition()
         '''
             Can use title to filter animation and attr i.e. BIG5, MP4
+            Why sometimes variable magnet is NoneType??
         '''
+        print self.regexList
         for item in entries:
-            # u'' is meaning? unicode!!, re.MULTILINE is meaning?
-            regex = self.get_parseCondition()
-            if None != re.search(re.compile(regex, re.MULTILINE),
-                                 item.title):
-                print item.title
-                print item.link
-                htmlRes = urllib.urlopen(item.link, None, header)
-                print htmlRes.getcode()
-                '''
-                Why this fail?
+            print item.title
+            for regex in self.regexList:
+                # u'' is meaning? unicode!!, re.MULTILINE is meaning?
+                if None != re.search(re.compile(regex, re.MULTILINE),
+                                     item.title):
+                    htmlRes = urllib.urlopen(item.link, None, header)
+                    print htmlRes.getcode()
+                    magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile(u'magnet'))
+                    print magnet
+                    self.tc.add_torrent(magnet['href'])
+                    '''
+                        Why removimg action will fail???
+                    '''
+                    self.regexList.remove( regex )
+                    break
 
-                magnet = BeautifulSoup(htmlRes.read()).find(name='a',
-                                                     attrs={'href': re.compile(u'magnet')})
-                '''
-                '''
-                Why this fail?
-                magnet = BeautifulSoup(htmlRes.read()).find_all(name='a')
-                '''
-                magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile('magnet'))
-                print magnet
-                self.tc.add_torrent(magnet['href'])
-                return True
-        return False
-
+            if not self.regexList: # All animation are downloading
+                return
     '''
         must be mult thresad
     '''
