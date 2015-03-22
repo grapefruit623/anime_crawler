@@ -76,19 +76,16 @@ class rss_parser():
         '''
             Can use title to filter animation and attr i.e. BIG5, MP4
             Why sometimes variable magnet is NoneType??
-            ToDo:
-                avoid to download RAW file
         '''
         print self.regexList
         for item in entries:
             for regex in self.regexList:
                 # u'' is meaning? unicode!!, re.MULTILINE is meaning?
-                print regex, item.title
-                if None != re.search(re.compile(regex, re.MULTILINE),
+                if None != re.search(re.compile(regex, re.MULTILINE | re.IGNORECASE),
                                      item.title):
                     htmlRes = urllib.urlopen(item.link, None, header)
                     #print htmlRes.getcode()
-                    print item.title
+                    print regex, item.title
                     magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile(u'magnet'))
                     print magnet
                     self.tc.add_torrent(magnet['href'])
