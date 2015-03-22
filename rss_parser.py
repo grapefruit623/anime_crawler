@@ -8,7 +8,8 @@ import feedparser
 import transmissionrpc
 import time
 
-from BeautifulSoup import BeautifulSoup
+# from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 userName = 'BT'
 passwd = '1234567'
