@@ -2,6 +2,7 @@
 import os
 import re
 import urllib
+import json
 
 import feedparser
 import transmissionrpc
@@ -20,32 +21,34 @@ class rss_parser():
         self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
         self.keywordList = self.get_targetList()
         self.get_parseCondition()
+        self.run()
 
+
+    def __del__(self):
+        print '__del__'
+
+    def run(self):
         if self.open_transmissionClient():  # Father will add torent
             time.sleep(3)
             self.tc = transmissionrpc.Client('localhost', port=9091,
                                              user=userName, password=passwd)
             self.timerForSearch()
 
-    def __del__(self):
-        print '__del__'
-
+    '''
+        .json format
+    '''
     def get_targetList(self):
-        f = open('targetList.txt', 'r')
-        d = f.readlines()
+        f = open('targetList.json', 'r')
+        j = json.load(f)
         f.close()
-        target = set([])
-        for keyword in d:
-            aAnimation = keyword.rstrip()
-            target.add(aAnimation)
-        return target
+        return j
 
 
     def timerForSearch(self):
         while 0 != len(self.regexList):
             self.parse_entries()
-            time.sleep(1800)
             print 'Not finish'
+            time.sleep(600)
         print 'finish!'
 
     '''
@@ -57,14 +60,12 @@ class rss_parser():
         self.regexList = set([]) 
         pattern = u'(?=.*{0})'
         for anim in self.keywordList:
-            regex = ''
-            for condition in anim.split(','):
-                regex += pattern.format(unicode(condition, 'utf8'))
+            regex = pattern.format(anim) 
+            condition = self.keywordList[anim]
+            for keyword in condition.values():
+                regex += pattern.format(keyword)
 
-            regex += '.*'
-            self.regexList.add( regex )
-
-
+            self.regexList.add(regex)
 
     '''
         Can get magnet href
@@ -75,22 +76,22 @@ class rss_parser():
         '''
             Can use title to filter animation and attr i.e. BIG5, MP4
             Why sometimes variable magnet is NoneType??
+            ToDo:
+                avoid to download RAW file
         '''
         print self.regexList
         for item in entries:
-            print item.title
             for regex in self.regexList:
                 # u'' is meaning? unicode!!, re.MULTILINE is meaning?
+                print regex, item.title
                 if None != re.search(re.compile(regex, re.MULTILINE),
                                      item.title):
                     htmlRes = urllib.urlopen(item.link, None, header)
-                    print htmlRes.getcode()
+                    #print htmlRes.getcode()
+                    print item.title
                     magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile(u'magnet'))
                     print magnet
                     self.tc.add_torrent(magnet['href'])
-                    '''
-                        Why removimg action will fail???
-                    '''
                     self.regexList.remove( regex )
                     break
 
@@ -111,7 +112,4 @@ class rss_parser():
 
 if __name__ == '__main__':
     rssParser = rss_parser()
-    # rss.print_all()
-    # rssParser.open_transmissionClient()
-    # rssParser.parse_entries()
     print '__main__'
