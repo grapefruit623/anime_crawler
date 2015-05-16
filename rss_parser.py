@@ -47,6 +47,7 @@ class rss_parser():
 
     def timerForSearch(self):
         while 0 != len(self.regexList):
+            self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
             self.parse_entries()
             print 'Not finish'
             time.sleep(600)
