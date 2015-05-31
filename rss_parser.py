@@ -46,7 +46,7 @@ class rss_parser():
 
 
     def timerForSearch(self):
-        while 0 != len(self.regexList):
+        while 0 < len(self.regexList):
             self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
             self.parse_entries()
             print 'Not finish'
@@ -86,10 +86,11 @@ class rss_parser():
                 if None != re.search(re.compile(regex, re.MULTILINE | re.IGNORECASE),
                                      item.title):
                     htmlRes = urllib.urlopen(item.link, None, header)
-                    #print htmlRes.getcode()
-                    print regex, item.title
-                    magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile(u'magnet'))
-                    print magnet
+                    # print htmlRes.read()
+                    # magnet = BeautifulSoup(htmlRes.read()).find(href=re.compile(u'magnet'))
+                    magnet = BeautifulSoup(htmlRes.read()).find('a', href=re.compile(u'magnet'))
+                    # print magnet
+                    # print magnet.attrs
                     self.tc.add_torrent(magnet['href'])
                     self.regexList.remove( regex )
                     break
