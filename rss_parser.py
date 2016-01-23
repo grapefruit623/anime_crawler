@@ -11,29 +11,48 @@ import time
 # from BeautifulSoup import BeautifulSoup
 from bs4 import BeautifulSoup
 
-userName = 'BT'
-passwd = '1234567'
-
 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; windows NT)'
 header = { 'User-Agent': user_agent }
 
+userName = 'BT'
+passwd = '1234567'
+
+'''
+    Transmission unit
+'''
+class transmissionInst():
+
+    def __init__(self):
+        return self.getTransmissionClient()
+
+    def openTransmissionClient(self):
+        pid = os.fork()
+        if 0 == pid:
+            print ('child launch transmission-gtk')
+            os.system('transmission-gtk')
+            return 0
+        else:
+            print ('father pid: ', pid)
+            return 1
+
+    def getTransmissionClient(self):
+        if self.openTransmissionClient():  # Father will add torent
+            time.sleep(3)
+            tc = transmissionrpc.Client('localhost', port=9091,
+                                             user=userName, password=passwd)
+            return tc
+
+
 class rss_parser():
+
     def __init__(self):
         self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
         self.keywordList = self.get_targetList()
         self.get_parseCondition()
-        self.run()
-
+        self.tc = transmissionInst()
 
     def __del__(self):
-        print '__del__'
-
-    def run(self):
-        if self.open_transmissionClient():  # Father will add torent
-            time.sleep(3)
-            self.tc = transmissionrpc.Client('localhost', port=9091,
-                                             user=userName, password=passwd)
-            self.timerForSearch()
+        print ('__del__')
 
     '''
         .json format
@@ -45,11 +64,11 @@ class rss_parser():
         return j
 
 
-    def timerForSearch(self):
+    def checkRSS(self):
         while 0 < len(self.regexList):
             self.parser = feedparser.parse('http://share.popgo.org/rss/rss.xml')
             self.parse_entries()
-            print 'Not finish'
+            print ('Not finish')
             time.sleep(600)
         print 'finish!'
 
@@ -97,19 +116,8 @@ class rss_parser():
 
             if not self.regexList: # All animation are downloading
                 return
-    '''
-        must be mult thresad
-    '''
-    def open_transmissionClient(self):
-        pid = os.fork()
-        if 0 == pid:
-            print 'child launch transmission-gtk'
-            os.system('transmission-gtk')
-            return 0
-        else:
-            print 'father pid: ', pid
-            return 1
 
 if __name__ == '__main__':
     rssParser = rss_parser()
-    print '__main__'
+    rssParser.checkRSS()
+    print ('__main__')
