@@ -59,7 +59,7 @@ class rss_parser():
     '''
     def get_targetList(self):
         f = open('targetList.json', 'r')
-        j = json.load(f)
+        j = json.load(f, encoding='utf-8')
         f.close()
         return j
 
